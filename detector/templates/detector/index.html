@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contador de Personas - Laboratorio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .video-container {
+            text-align: center;
+            margin: 30px 0;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .video-container img {
+            width: 100%;
+            max-width: 640px;
+            height: auto;
+            display: block;
+        }
+        
+        .counter-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 30px;
+            font-size: 1.8em;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .info {
+            text-align: center;
+            color: #666;
+            margin-top: 20px;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎥 Contador de Personas en el Laboratorio</h1>
+        
+        <div class="video-container">
+            <img src="{% url 'video_feed' %}" alt="Video en tiempo real">
+        </div>
+        
+        <div class="counter-display">
+            👥 Personas detectadas: <span id="count">0</span>
+        </div>
+        
+        <div class="info">
+            <p><strong>Sistema de detección en tiempo real</strong></p>
+            <div>
+                <span class="badge">OpenCV</span>
+                <span class="badge">Django</span>
+                <span class="badge">Python</span>
+            </div>
+            <p style="margin-top: 10px;">Método: HOG (Histogram of Oriented Gradients)</p>
+        </div>
+    </div>
+</body>
+</html>
