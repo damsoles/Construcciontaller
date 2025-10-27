@@ -1,3 +1,4 @@
+import os
 import cv2
 import numpy as np
 from django.http import StreamingHttpResponse
@@ -6,114 +7,178 @@ from django.shortcuts import render
 # Variable global para contador
 people_count = 0
 
+# Rutas del modelo MobileNet-SSD
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_DIR = os.path.join(BASE_DIR, 'models')
+PROTOTXT = os.path.join(MODEL_DIR, 'MobileNetSSD_deploy.prototxt')
+CAFFEMODEL = os.path.join(MODEL_DIR, 'MobileNetSSD_deploy.caffemodel')
+
+# Clase "person" en MobileNet-SSD (índice 15)
+CLASS_PERSON = 15
+
 def index(request):
     """Vista principal que muestra el template"""
     return render(request, 'detector/index.html')
 
 def gen_frames():
-    """Generador que procesa frames de video con detección mejorada"""
+    """Generador con MobileNet-SSD (OpenCV DNN) para máxima precisión"""
     global people_count
     
-    # Inicializar captura de video (0 = cámara predeterminada)
+    # Inicializar cámara
     camera = cv2.VideoCapture(0)
-    
-    # Configurar parámetros de la cámara para mejor calidad
     camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
     camera.set(cv2.CAP_PROP_FPS, 30)
     
-    # Inicializar detector HOG para personas
-    hog = cv2.HOGDescriptor()
-    hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
+    # Verificar si existe el modelo MobileNet-SSD
+    use_mobilenet = os.path.exists(PROTOTXT) and os.path.exists(CAFFEMODEL)
     
-    # Variables para suavizado de detección
-    frame_skip = 0
-    detection_threshold = 0.4  # Umbral de confianza para filtrar falsos positivos
+    if use_mobilenet:
+        # Cargar MobileNet-SSD con OpenCV DNN
+        net = cv2.dnn.readNetFromCaffe(PROTOTXT, CAFFEMODEL)
+        print("✅ Usando MobileNet-SSD con OpenCV DNN - Precisión mejorada")
+    else:
+        # Fallback a HOG si no hay modelo
+        hog = cv2.HOGDescriptor()
+        hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
+        print("⚠️ MobileNet-SSD no encontrado. Ejecuta: .\\descargar_modelo.ps1")
+        print("📍 Usando HOG (precisión limitada)")
+    
+    # Buffer para suavizado temporal
+    count_buffer = []
     
     while True:
-        # Leer frame de la cámara
         success, frame = camera.read()
-        
         if not success:
             break
         
-        # Voltear horizontalmente para efecto espejo (más natural)
+        # Efecto espejo
         frame = cv2.flip(frame, 1)
+        h, w = frame.shape[:2]
         
-        # Procesar cada 2 frames para mejor rendimiento
-        frame_skip += 1
-        if frame_skip % 2 == 0:
-            # Detectar personas con parámetros optimizados
-            boxes, weights = hog.detectMultiScale(
-                frame, 
-                winStride=(4, 4),      # Ventana más pequeña = mejor detección
-                padding=(8, 8),        # Más padding = mejor captura de bordes
-                scale=1.05,            # Escala de búsqueda
-                hitThreshold=0         # Umbral de detección (0 = predeterminado)
+        boxes = []
+        confidences = []
+        
+        if use_mobilenet:
+            # ===== DETECCIÓN CON MOBILENET-SSD (ALTA PRECISIÓN) =====
+            
+            # Preparar imagen para la red neuronal
+            blob = cv2.dnn.blobFromImage(
+                cv2.resize(frame, (300, 300)), 
+                0.007843,  # Factor de escala
+                (300, 300), 
+                127.5  # Sustracción de media
             )
             
-            # Filtrar detecciones por confianza
-            if len(weights) > 0:
-                # Filtrar por peso/confianza
-                filtered_detections = []
-                for (x, y, w, h), weight in zip(boxes, weights):
-                    if weight > detection_threshold:
-                        filtered_detections.append((x, y, w, h))
+            # Pasar imagen por la red
+            net.setInput(blob)
+            detections = net.forward()
+            
+            # Procesar cada detección
+            for i in range(detections.shape[2]):
+                confidence = float(detections[0, 0, i, 2])
+                class_id = int(detections[0, 0, i, 1])
                 
-                # Actualizar contador con detecciones filtradas
-                people_count = len(filtered_detections)
-                
-                # Dibujar rectángulos alrededor de las personas detectadas
-                for (x, y, w, h) in filtered_detections:
-                    # Rectángulo principal (verde)
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
+                # Filtrar: solo personas con confianza > 50%
+                if class_id == CLASS_PERSON and confidence > 0.5:
+                    # Obtener coordenadas del rectángulo
+                    box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+                    (x1, y1, x2, y2) = box.astype("int")
                     
-                    # Etiqueta con confianza
-                    label = f"Persona"
-                    cv2.putText(
-                        frame, 
-                        label, 
-                        (x, y - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 
-                        0.6, 
-                        (0, 255, 0), 
-                        2
-                    )
+                    # Asegurar que las coordenadas estén dentro del frame
+                    x = max(0, x1)
+                    y = max(0, y1)
+                    box_w = max(0, x2 - x1)
+                    box_h = max(0, y2 - y1)
+                    
+                    # Filtro adicional: validar proporciones humanas
+                    if box_h > 0 and box_w > 0:
+                        aspect_ratio = box_h / box_w
+                        area = box_w * box_h
+                        
+                        # Proporción altura/ancho típica: 1.2 a 4.0
+                        # Área mínima: 1500 píxeles
+                        if 1.2 <= aspect_ratio <= 4.0 and area > 1500:
+                            boxes.append([x, y, box_w, box_h])
+                            confidences.append(confidence)
+            
+            # Non-Maximum Suppression (eliminar detecciones superpuestas)
+            if len(boxes) > 0:
+                indices = cv2.dnn.NMSBoxes(
+                    boxes, 
+                    confidences, 
+                    score_threshold=0.5,  # Confianza mínima
+                    nms_threshold=0.3     # Umbral de IoU
+                )
+                
+                # Mantener solo las mejores detecciones
+                final_boxes = []
+                if len(indices) > 0:
+                    for i in indices.flatten():
+                        final_boxes.append(boxes[i])
+                boxes = final_boxes
             else:
-                people_count = 0
+                boxes = []
         
-        # Crear overlay oscuro semi-transparente para el texto
-        overlay = frame.copy()
-        cv2.rectangle(overlay, (0, 0), (300, 60), (0, 0, 0), -1)
-        cv2.addWeighted(overlay, 0.6, frame, 0.4, 0, frame)
+        else:
+            # ===== FALLBACK: HOG DETECTOR (MENOR PRECISIÓN) =====
+            rects, weights = hog.detectMultiScale(
+                frame, 
+                winStride=(4, 4),
+                padding=(16, 16), 
+                scale=1.05
+            )
+            
+            # Filtrar por confianza
+            for i, (x, y, w, h) in enumerate(rects):
+                if weights[i] > 0.5:
+                    boxes.append([x, y, w, h])
         
-        # Mostrar contador en el frame con mejor visualización
+        # Actualizar contador con suavizado temporal
+        person_count = len(boxes)
+        count_buffer.append(person_count)
+        
+        if len(count_buffer) > 5:
+            count_buffer.pop(0)
+        
+        # Usar la moda (valor más frecuente) para estabilidad
+        if len(count_buffer) >= 3:
+            people_count = max(set(count_buffer), key=count_buffer.count)
+        else:
+            people_count = person_count
+        
+        # Dibujar rectángulos verdes alrededor de las personas
+        for (x, y, w, h) in boxes:
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
+        
+        # Mostrar contador en el frame
         cv2.putText(
             frame, 
             f'Personas: {people_count}', 
             (10, 40),
-            cv2.FONT_HERSHEY_DUPLEX, 
+            cv2.FONT_HERSHEY_SIMPLEX, 
             1.2, 
-            (255, 255, 255), 
-            2,
+            (0, 255, 0), 
+            3,
             cv2.LINE_AA
         )
         
-        # Codificar frame a formato JPEG con calidad mejorada
-        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 85]
-        ret, buffer = cv2.imencode('.jpg', frame, encode_param)
-        frame = buffer.tobytes()
+        # Codificar frame a JPEG
+        ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 90])
+        frame_out = buffer.tobytes()
         
-        # Retornar frame en formato streaming
+        # Enviar frame al navegador
         yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+               b'Content-Type: image/jpeg\r\n\r\n' + frame_out + b'\r\n')
     
-    # Liberar cámara al terminar
     camera.release()
 
 def video_feed(request):
-    """Vista que sirve el streaming de video"""
+    """Vista que devuelve el streaming de video"""
     return StreamingHttpResponse(
         gen_frames(),
         content_type='multipart/x-mixed-replace; boundary=frame'
     )
+
+def video_feed(request):
+    return StreamingHttpResponse(gen_frames(), content_type='multipart/x-mixed-replace; boundary=frame')
