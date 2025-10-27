@@ -1,11 +1,16 @@
 import os
 import cv2
 import numpy as np
-from django.http import StreamingHttpResponse
+import uuid
+from datetime import datetime
+from django.http import StreamingHttpResponse, JsonResponse
 from django.shortcuts import render
+from .models import PersonCountEvent, PersonTracking
 
 # Variable global para contador
 people_count = 0
+current_event_id = None
+last_saved_count = -1
 
 # Rutas del modelo MobileNet-SSD
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -22,7 +27,7 @@ def index(request):
 
 def gen_frames():
     """Generador con MobileNet-SSD (OpenCV DNN) para máxima precisión"""
-    global people_count
+    global people_count, current_event_id, last_saved_count
     
     # Inicializar cámara
     camera = cv2.VideoCapture(0)
@@ -46,6 +51,11 @@ def gen_frames():
     
     # Buffer para suavizado temporal
     count_buffer = []
+    frame_counter = 0
+    
+    # Tracking de personas (simplificado por posición)
+    tracked_persons = {}
+    next_person_id = 1
     
     while True:
         success, frame = camera.read()
@@ -147,6 +157,21 @@ def gen_frames():
         else:
             people_count = person_count
         
+        # Guardar evento en base de datos cuando cambia el conteo
+        frame_counter += 1
+        if frame_counter % 30 == 0:  # Cada 30 frames (aproximadamente 1 segundo)
+            if people_count != last_saved_count:
+                current_event_id = f"EVT-{uuid.uuid4().hex[:8].upper()}"
+                try:
+                    PersonCountEvent.objects.create(
+                        event_id=current_event_id,
+                        person_count=people_count
+                    )
+                    last_saved_count = people_count
+                    print(f"💾 Evento guardado: {current_event_id} - {people_count} persona(s)")
+                except Exception as e:
+                    print(f"Error guardando evento: {e}")
+        
         # Dibujar rectángulos verdes alrededor de las personas
         for (x, y, w, h) in boxes:
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
@@ -179,6 +204,24 @@ def video_feed(request):
         gen_frames(),
         content_type='multipart/x-mixed-replace; boundary=frame'
     )
+
+def get_recent_events(request):
+    """API para obtener los últimos 10 eventos de detección"""
+    events = PersonCountEvent.objects.all()[:10]
+    data = {
+        'events': [
+            {
+                'id': event.event_id,
+                'count': event.person_count,
+                'timestamp': event.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                'time_only': event.timestamp.strftime('%H:%M:%S'),
+            }
+            for event in events
+        ],
+        'current_count': people_count,
+        'current_event_id': current_event_id or 'N/A'
+    }
+    return JsonResponse(data)
 
 def video_feed(request):
     return StreamingHttpResponse(gen_frames(), content_type='multipart/x-mixed-replace; boundary=frame')

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contador de Personas - Laboratorio</title>
+    <title>Sistema de Detección de Personas | OpenCV + MobileNet-SSD</title>
     <style>
         * {
             margin: 0;
@@ -15,96 +15,310 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             padding: 20px;
         }
         
         .container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            padding: 40px;
-            max-width: 900px;
-            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
         }
         
-        h1 {
-            color: #333;
+        .header {
             text-align: center;
+            color: white;
             margin-bottom: 30px;
+        }
+        
+        .header h1 {
             font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .card-title {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         
         .video-container {
             text-align: center;
-            margin: 30px 0;
-            background: #000;
-            border-radius: 15px;
+            background: #f0f0f0;
+            border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
         
         .video-container img {
             width: 100%;
-            max-width: 640px;
-            height: auto;
             display: block;
         }
         
-        .counter-display {
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-box {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 25px;
-            border-radius: 15px;
+            padding: 20px;
+            border-radius: 10px;
             text-align: center;
-            margin-top: 30px;
-            font-size: 1.8em;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 2em;
             font-weight: bold;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
         
-        .info {
-            text-align: center;
-            color: #666;
-            margin-top: 20px;
-            font-size: 0.95em;
-            line-height: 1.6;
+        .events-table-container {
+            max-height: 500px;
+            overflow-y: auto;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
         }
         
-        .badge {
-            display: inline-block;
+        .events-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .events-table thead {
+            background: #667eea;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .events-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .events-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .events-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .event-id {
+            font-family: 'Courier New', monospace;
+            background: #e3f2fd;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #1976d2;
+        }
+        
+        .person-count-badge {
             background: #4CAF50;
             color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        
+        .timestamp {
+            color: #666;
+            font-size: 0.95em;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #4CAF50;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            margin-right: 5px;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .no-events {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .tech-badge {
+            display: inline-block;
+            background: #fff;
+            color: #667eea;
             padding: 5px 15px;
             border-radius: 20px;
+            font-size: 0.85em;
             margin: 5px;
-            font-size: 0.9em;
+            font-weight: 600;
+        }
+        
+        .footer-info {
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+            opacity: 0.9;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎥 Contador de Personas en el Laboratorio</h1>
-        
-        <div class="video-container">
-            <img src="{% url 'video_feed' %}" alt="Video en tiempo real">
-        </div>
-        
-        <div class="counter-display">
-            👥 Personas detectadas: <span id="count">0</span>
-        </div>
-        
-        <div class="info">
-            <p><strong>Sistema de detección en tiempo real</strong></p>
+        <div class="header">
+            <h1>🎥 Sistema de Detección de Personas</h1>
+            <p class="subtitle">
+                <span class="status-indicator"></span>
+                Detección en Tiempo Real con MobileNet-SSD y OpenCV DNN
+            </p>
             <div>
-                <span class="badge">OpenCV</span>
-                <span class="badge">Django</span>
-                <span class="badge">Python</span>
+                <span class="tech-badge">Django 5.2</span>
+                <span class="tech-badge">OpenCV 4.6</span>
+                <span class="tech-badge">MobileNet-SSD</span>
+                <span class="tech-badge">Precisión 85-95%</span>
             </div>
-            <p style="margin-top: 10px;">Método: HOG (Histogram of Oriented Gradients)</p>
+        </div>
+        
+        <div class="main-grid">
+            <!-- Columna Izquierda: Video y Estadísticas -->
+            <div>
+                <div class="card">
+                    <h2 class="card-title">📹 Cámara en Vivo</h2>
+                    <div class="video-container">
+                        <img src="{% url 'video_feed' %}" alt="Video en tiempo real">
+                    </div>
+                </div>
+                
+                <div class="card" style="margin-top: 20px;">
+                    <h2 class="card-title">📊 Estadísticas Actuales</h2>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-label">Personas Detectadas</div>
+                            <div class="stat-value" id="current-count">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Evento Actual</div>
+                            <div class="stat-value" id="current-event" style="font-size: 1.2em;">N/A</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Columna Derecha: Historial de Eventos -->
+            <div class="card">
+                <h2 class="card-title">
+                    📋 Historial de Detecciones
+                    <span style="font-size: 0.6em; color: #999; margin-left: auto;">(Últimas 10)</span>
+                </h2>
+                <div class="events-table-container" id="events-container">
+                    <table class="events-table">
+                        <thead>
+                            <tr>
+                                <th>ID del Evento</th>
+                                <th>Personas</th>
+                                <th>Fecha y Hora</th>
+                            </tr>
+                        </thead>
+                        <tbody id="events-body">
+                            <tr>
+                                <td colspan="3" class="no-events">
+                                    🔄 Cargando eventos...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer-info">
+            <p>💡 <strong>Sistema Inteligente:</strong> Detección automática con seguimiento de eventos en SQLite</p>
+            <p style="margin-top: 5px; font-size: 0.9em;">Los eventos se guardan automáticamente cada vez que cambia el número de personas</p>
         </div>
     </div>
+    
+    <script>
+        // Actualizar eventos cada 2 segundos
+        function updateEvents() {
+            fetch('/api/events/')
+                .then(response => response.json())
+                .then(data => {
+                    // Actualizar estadísticas actuales
+                    document.getElementById('current-count').textContent = data.current_count;
+                    document.getElementById('current-event').textContent = data.current_event_id;
+                    
+                    // Actualizar tabla de eventos
+                    const tbody = document.getElementById('events-body');
+                    
+                    if (data.events.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="3" class="no-events">
+                                    📭 No hay eventos registrados aún
+                                </td>
+                            </tr>
+                        `;
+                        return;
+                    }
+                    
+                    tbody.innerHTML = data.events.map(event => `
+                        <tr>
+                            <td><span class="event-id">${event.id}</span></td>
+                            <td><span class="person-count-badge">${event.count} ${event.count === 1 ? 'Persona' : 'Personas'}</span></td>
+                            <td class="timestamp">${event.timestamp}</td>
+                        </tr>
+                    `).join('');
+                })
+                .catch(error => {
+                    console.error('Error al actualizar eventos:', error);
+                });
+        }
+        
+        // Actualizar inmediatamente y luego cada 2 segundos
+        updateEvents();
+        setInterval(updateEvents, 2000);
+    </script>
 </body>
 </html>
