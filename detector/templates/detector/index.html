@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -13,7 +14,7 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #5A87E9 0%, #4A6FD6 100%);
+            background: linear-gradient(135deg, rgba(90, 135, 233, 0.8) 0%, rgba(74, 111, 214, 0.8) 100%), url("{% static 'imagen fondo.png' %}") center/cover no-repeat fixed;
             min-height: 100vh;
             padding: 20px;
         }
@@ -280,6 +281,11 @@
                 <span class="tech-badge">OpenCV 4.6</span>
                 <span class="tech-badge">MobileNet-SSD</span>
                 <span class="tech-badge">Precisión 85-95%</span>
+            </div>
+            <div style="margin-top: 15px;">
+                <a href="{% url 'logout' %}" style="color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 8px 20px; border-radius: 20px; font-size: 0.9em; display: inline-block;">
+                    {{ user.username }} | Cerrar Sesión
+                </a>
             </div>
         </div>
         

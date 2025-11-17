@@ -5,7 +5,11 @@ import numpy as np  # type: ignore
 import uuid
 from datetime import datetime
 from django.http import StreamingHttpResponse, JsonResponse, HttpRequest, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from .models import PersonCountEvent, PersonTracking
 
 # Variable global para contador
@@ -26,8 +30,101 @@ CAFFEMODEL: str = os.path.join(MODEL_DIR, 'MobileNetSSD_deploy.caffemodel')
 # Clase "person" en MobileNet-SSD (índice 15)
 CLASS_PERSON: int = 15
 
+# ============================================
+# VISTAS DE AUTENTICACIÓN
+# ============================================
+
+def login_view(request: HttpRequest) -> HttpResponse:
+    """Vista para iniciar sesión"""
+    if request.user.is_authenticated:
+        return redirect('index')
+    
+    if request.method == 'POST':
+        username: str = request.POST.get('username', '')
+        password: str = request.POST.get('password', '')
+        
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            login(request, user)
+            return redirect('index')
+        else:
+            return render(request, 'detector/login.html', {
+                'error': 'Usuario o contraseña incorrectos'
+            })
+    
+    return render(request, 'detector/login.html')
+
+def register_view(request: HttpRequest) -> HttpResponse:
+    """Vista para registrar nuevo usuario"""
+    if request.user.is_authenticated:
+        return redirect('index')
+    
+    if request.method == 'POST':
+        username: str = request.POST.get('username', '')
+        email: str = request.POST.get('email', '')
+        password1: str = request.POST.get('password1', '')
+        password2: str = request.POST.get('password2', '')
+        
+        # Validaciones
+        if not username or not password1 or not password2:
+            return render(request, 'detector/register.html', {
+                'error': 'Todos los campos obligatorios deben ser completados',
+                'username': username,
+                'email': email
+            })
+        
+        if password1 != password2:
+            return render(request, 'detector/register.html', {
+                'error': 'Las contraseñas no coinciden',
+                'username': username,
+                'email': email
+            })
+        
+        if len(password1) < 8:
+            return render(request, 'detector/register.html', {
+                'error': 'La contraseña debe tener al menos 8 caracteres',
+                'username': username,
+                'email': email
+            })
+        
+        if User.objects.filter(username=username).exists():
+            return render(request, 'detector/register.html', {
+                'error': 'El nombre de usuario ya existe',
+                'username': '',
+                'email': email
+            })
+        
+        # Crear usuario
+        try:
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password1
+            )
+            login(request, user)
+            return redirect('login')
+        except Exception as e:
+            return render(request, 'detector/register.html', {
+                'error': f'Error al crear la cuenta: {str(e)}',
+                'username': username,
+                'email': email
+            })
+    
+    return render(request, 'detector/register.html')
+
+def logout_view(request: HttpRequest) -> HttpResponse:
+    """Vista para cerrar sesión"""
+    logout(request)
+    return redirect('login')
+
+# ============================================
+# VISTAS PRINCIPALES (REQUIEREN AUTENTICACIÓN)
+# ============================================
+
+@login_required
 def index(request: HttpRequest) -> HttpResponse:
-    """Vista principal que muestra el template"""
+    """Vista principal que muestra el template (requiere login)"""
     return render(request, 'detector/index.html')
 
 def gen_frames() -> Generator[bytes, None, None]:

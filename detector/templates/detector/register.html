@@ -1,0 +1,312 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - Sistema de Detección de Personas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, rgba(90, 135, 233, 0.8) 0%, rgba(74, 111, 214, 0.8) 100%), url("{% static 'imagen fondo.png' %}") center/cover no-repeat fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .register-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            max-width: 450px;
+            width: 100%;
+        }
+        
+        .register-header {
+            background: linear-gradient(135deg, #5A87E9 0%, #4A6FD6 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .register-header h1 {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .register-header p {
+            font-size: 0.95em;
+            opacity: 0.95;
+        }
+        
+        .register-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        
+        .register-body {
+            padding: 40px 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #5A87E9;
+            box-shadow: 0 0 0 3px rgba(90, 135, 233, 0.1);
+        }
+        
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #999;
+            font-size: 0.85em;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #5A87E9 0%, #4A6FD6 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(90, 135, 233, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .divider {
+            text-align: center;
+            margin: 25px 0;
+            color: #999;
+            position: relative;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: #e0e0e0;
+        }
+        
+        .divider::before {
+            left: 0;
+        }
+        
+        .divider::after {
+            right: 0;
+        }
+        
+        .login-link {
+            text-align: center;
+            color: #666;
+            font-size: 0.95em;
+        }
+        
+        .login-link a {
+            color: #5A87E9;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        
+        .login-link a:hover {
+            color: #4A6FD6;
+            text-decoration: underline;
+        }
+        
+        .alert {
+            padding: 12px 18px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.95em;
+        }
+        
+        .alert-error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+        
+        .alert-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #81c784;
+        }
+        
+        .tech-badges {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .tech-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        
+        .requirements-box {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+        
+        .requirements-box h4 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+        
+        .requirements-box ul {
+            margin-left: 20px;
+            color: #666;
+        }
+        
+        .requirements-box li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-header">
+            <h1>Sistema de Detección de Personas</h1>
+            <img src="{% static 'logo conteo.png' %}" alt="Logo" style="width: 120px; height: auto; margin: 15px 0;">
+            <p>Crear Nueva Cuenta</p>
+            <div class="tech-badges">
+                <span class="tech-badge">OpenCV</span>
+                <span class="tech-badge">MobileNet-SSD</span>
+                <span class="tech-badge">Django</span>
+            </div>
+        </div>
+        
+        <div class="register-body">
+            {% if error %}
+            <div class="alert alert-error">
+                <strong>Error:</strong> {{ error }}
+            </div>
+            {% endif %}
+            
+            <form method="POST" action="{% url 'register' %}">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="username">Usuario</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        placeholder="Elige un nombre de usuario"
+                        required
+                        autofocus
+                        value="{{ username }}"
+                    >
+                    <small>Solo letras, números y los caracteres @/./+/-/_</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email (opcional)</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        placeholder="tucorreo@ejemplo.com"
+                        value="{{ email }}"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="password1">Contraseña</label>
+                    <input 
+                        type="password" 
+                        id="password1" 
+                        name="password1" 
+                        placeholder="Crea una contraseña segura"
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="password2">Confirmar Contraseña</label>
+                    <input 
+                        type="password" 
+                        id="password2" 
+                        name="password2" 
+                        placeholder="Repite la contraseña"
+                        required
+                    >
+                </div>
+                
+                <div class="requirements-box">
+                    <h4>Requisitos de contraseña:</h4>
+                    <ul>
+                        <li>Mínimo 8 caracteres</li>
+                        <li>No puede ser solo numérica</li>
+                        <li>No puede ser muy común</li>
+                    </ul>
+                </div>
+                
+                <button type="submit" class="btn">
+                    Crear Cuenta
+                </button>
+            </form>
+            
+            <div class="divider">o</div>
+            
+            <div class="login-link">
+                ¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión aquí</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
