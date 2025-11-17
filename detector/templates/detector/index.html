@@ -203,6 +203,68 @@
             margin-top: 20px;
             opacity: 0.9;
         }
+        
+        .camera-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn-start {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .btn-start:hover {
+            background: #45a049;
+        }
+        
+        .btn-stop {
+            background: #f44336;
+            color: white;
+        }
+        
+        .btn-stop:hover {
+            background: #da190b;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .camera-placeholder {
+            background: #e0e0e0;
+            padding: 60px 20px;
+            text-align: center;
+            color: #666;
+            border-radius: 10px;
+        }
+        
+        .camera-placeholder h3 {
+            margin-bottom: 10px;
+            font-size: 1.5em;
+        }
     </style>
 </head>
 <body>
@@ -226,8 +288,19 @@
             <div>
                 <div class="card">
                     <h2 class="card-title">📹 Cámara en Vivo</h2>
-                    <div class="video-container">
-                        <img src="{% url 'video_feed' %}" alt="Video en tiempo real">
+                    <div class="video-container" id="video-container">
+                        <div class="camera-placeholder">
+                            <h3>Cámara Detenida</h3>
+                            <p>Presiona "Iniciar Cámara" para comenzar la detección</p>
+                        </div>
+                    </div>
+                    <div class="camera-controls">
+                        <button class="btn btn-start" id="btn-start" onclick="startCamera()">
+                            Iniciar Cámara
+                        </button>
+                        <button class="btn btn-stop" id="btn-stop" onclick="stopCamera()" disabled>
+                            Detener Cámara
+                        </button>
                     </div>
                 </div>
                 
@@ -280,6 +353,70 @@
     </div>
     
     <script>
+        let cameraActive = false;
+        let updateInterval = null;
+        
+        // Iniciar cámara
+        function startCamera() {
+            const videoContainer = document.getElementById('video-container');
+            const btnStart = document.getElementById('btn-start');
+            const btnStop = document.getElementById('btn-stop');
+            
+            // Cambiar a video en vivo
+            videoContainer.innerHTML = `
+                <img src="{% url 'video_feed' %}?t=${Date.now()}" alt="Video en tiempo real">
+            `;
+            
+            // Actualizar botones
+            btnStart.disabled = true;
+            btnStop.disabled = false;
+            cameraActive = true;
+            
+            // Iniciar actualización de eventos
+            updateEvents();
+            updateInterval = setInterval(updateEvents, 2000);
+        }
+        
+        // Detener cámara
+        function stopCamera() {
+            const videoContainer = document.getElementById('video-container');
+            const btnStart = document.getElementById('btn-start');
+            const btnStop = document.getElementById('btn-stop');
+            
+            // Llamar API para detener cámara en el servidor
+            fetch('/api/stop_camera/')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Cámara detenida:', data);
+                })
+                .catch(error => {
+                    console.error('Error al detener cámara:', error);
+                });
+            
+            // Volver a placeholder
+            videoContainer.innerHTML = `
+                <div class="camera-placeholder">
+                    <h3>📷 Cámara Detenida</h3>
+                    <p>Presiona "Iniciar Cámara" para comenzar la detección</p>
+                </div>
+            `;
+            
+            // Actualizar botones
+            btnStart.disabled = false;
+            btnStop.disabled = true;
+            cameraActive = false;
+            
+            // Detener actualización de eventos
+            if (updateInterval) {
+                clearInterval(updateInterval);
+                updateInterval = null;
+            }
+            
+            // Resetear estadísticas
+            document.getElementById('current-count').textContent = '0';
+            document.getElementById('current-event').textContent = 'N/A';
+        }
+        
         // Actualizar eventos cada 2 segundos
         function updateEvents() {
             fetch('/api/events/')
@@ -316,9 +453,8 @@
                 });
         }
         
-        // Actualizar inmediatamente y luego cada 2 segundos
+        // Cargar eventos iniciales (sin video)
         updateEvents();
-        setInterval(updateEvents, 2000);
     </script>
 </body>
 </html>

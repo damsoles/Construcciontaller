@@ -5,4 +5,5 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('video_feed/', views.video_feed, name='video_feed'),
     path('api/events/', views.get_recent_events, name='get_recent_events'),
+    path('api/stop_camera/', views.stop_camera, name='stop_camera'),
 ]

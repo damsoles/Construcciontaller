@@ -12,6 +12,10 @@ people_count = 0
 current_event_id = None
 last_saved_count = -1
 
+# Control de cámara
+camera_active = False
+camera_instance = None
+
 # Rutas del modelo MobileNet-SSD
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(BASE_DIR, 'models')
@@ -27,13 +31,14 @@ def index(request):
 
 def gen_frames():
     """Generador con MobileNet-SSD (OpenCV DNN) para máxima precisión"""
-    global people_count, current_event_id, last_saved_count
+    global people_count, current_event_id, last_saved_count, camera_active, camera_instance
     
     # Inicializar cámara
-    camera = cv2.VideoCapture(0)
-    camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-    camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-    camera.set(cv2.CAP_PROP_FPS, 30)
+    camera_instance = cv2.VideoCapture(0)
+    camera_instance.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    camera_instance.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    camera_instance.set(cv2.CAP_PROP_FPS, 30)
+    camera_active = True
     
     # Verificar si existe el modelo MobileNet-SSD
     use_mobilenet = os.path.exists(PROTOTXT) and os.path.exists(CAFFEMODEL)
@@ -57,8 +62,8 @@ def gen_frames():
     tracked_persons = {}
     next_person_id = 1
     
-    while True:
-        success, frame = camera.read()
+    while camera_active:
+        success, frame = camera_instance.read()
         if not success:
             break
         
@@ -196,7 +201,10 @@ def gen_frames():
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame_out + b'\r\n')
     
-    camera.release()
+    # Liberar cámara al terminar
+    if camera_instance:
+        camera_instance.release()
+        camera_instance = None
 
 def video_feed(request):
     """Vista que devuelve el streaming de video"""
@@ -204,6 +212,20 @@ def video_feed(request):
         gen_frames(),
         content_type='multipart/x-mixed-replace; boundary=frame'
     )
+
+def stop_camera(request):
+    """API para detener la cámara"""
+    global camera_active, camera_instance, people_count, current_event_id
+    
+    camera_active = False
+    if camera_instance:
+        camera_instance.release()
+        camera_instance = None
+    
+    people_count = 0
+    current_event_id = None
+    
+    return JsonResponse({'status': 'stopped'})
 
 def get_recent_events(request):
     """API para obtener los últimos 10 eventos de detección"""
