@@ -1,35 +1,36 @@
 import os
-import cv2
-import numpy as np
+from typing import Generator, Optional, Any, Dict, List
+import cv2  # type: ignore
+import numpy as np  # type: ignore
 import uuid
 from datetime import datetime
-from django.http import StreamingHttpResponse, JsonResponse
+from django.http import StreamingHttpResponse, JsonResponse, HttpRequest, HttpResponse
 from django.shortcuts import render
 from .models import PersonCountEvent, PersonTracking
 
 # Variable global para contador
-people_count = 0
-current_event_id = None
-last_saved_count = -1
+people_count: int = 0
+current_event_id: Optional[str] = None
+last_saved_count: int = -1
 
 # Control de cámara
-camera_active = False
-camera_instance = None
+camera_active: bool = False
+camera_instance: Optional[Any] = None
 
 # Rutas del modelo MobileNet-SSD
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_DIR = os.path.join(BASE_DIR, 'models')
-PROTOTXT = os.path.join(MODEL_DIR, 'MobileNetSSD_deploy.prototxt')
-CAFFEMODEL = os.path.join(MODEL_DIR, 'MobileNetSSD_deploy.caffemodel')
+BASE_DIR: str = os.path.dirname(os.path.abspath(__file__))
+MODEL_DIR: str = os.path.join(BASE_DIR, 'models')
+PROTOTXT: str = os.path.join(MODEL_DIR, 'MobileNetSSD_deploy.prototxt')
+CAFFEMODEL: str = os.path.join(MODEL_DIR, 'MobileNetSSD_deploy.caffemodel')
 
 # Clase "person" en MobileNet-SSD (índice 15)
-CLASS_PERSON = 15
+CLASS_PERSON: int = 15
 
-def index(request):
+def index(request: HttpRequest) -> HttpResponse:
     """Vista principal que muestra el template"""
     return render(request, 'detector/index.html')
 
-def gen_frames():
+def gen_frames() -> Generator[bytes, None, None]:
     """Generador con MobileNet-SSD (OpenCV DNN) para máxima precisión"""
     global people_count, current_event_id, last_saved_count, camera_active, camera_instance
     
@@ -41,7 +42,10 @@ def gen_frames():
     camera_active = True
     
     # Verificar si existe el modelo MobileNet-SSD
-    use_mobilenet = os.path.exists(PROTOTXT) and os.path.exists(CAFFEMODEL)
+    use_mobilenet: bool = os.path.exists(PROTOTXT) and os.path.exists(CAFFEMODEL)
+    
+    net: Optional[Any] = None
+    hog: Optional[Any] = None
     
     if use_mobilenet:
         # Cargar MobileNet-SSD con OpenCV DNN
@@ -55,42 +59,46 @@ def gen_frames():
         print("📍 Usando HOG (precisión limitada)")
     
     # Buffer para suavizado temporal
-    count_buffer = []
-    frame_counter = 0
+    count_buffer: List[int] = []
+    frame_counter: int = 0
     
     # Tracking de personas (simplificado por posición)
-    tracked_persons = {}
-    next_person_id = 1
+    tracked_persons: Dict[int, Any] = {}
+    next_person_id: int = 1
     
     while camera_active:
-        success, frame = camera_instance.read()
+        success: bool
+        frame: Any
+        success, frame = camera_instance.read()  # type: ignore
         if not success:
             break
         
         # Efecto espejo
         frame = cv2.flip(frame, 1)
+        h: int
+        w: int
         h, w = frame.shape[:2]
         
-        boxes = []
-        confidences = []
+        boxes: List[List[int]] = []
+        confidences: List[float] = []
         
         if use_mobilenet:
             # ===== DETECCIÓN CON MOBILENET-SSD (ALTA PRECISIÓN) =====
             
             # Preparar imagen para la red neuronal
-            blob = cv2.dnn.blobFromImage(
-                cv2.resize(frame, (300, 300)), 
+            blob: Any = cv2.dnn.blobFromImage(  # type: ignore
+                cv2.resize(frame, (300, 300)),  # type: ignore
                 0.007843,  # Factor de escala
                 (300, 300), 
                 127.5  # Sustracción de media
             )
             
             # Pasar imagen por la red
-            net.setInput(blob)
-            detections = net.forward()
+            net.setInput(blob)  # type: ignore
+            detections: Any = net.forward()  # type: ignore
             
             # Procesar cada detección
-            for i in range(detections.shape[2]):
+            for i in range(detections.shape[2]):  # type: ignore
                 confidence = float(detections[0, 0, i, 2])
                 class_id = int(detections[0, 0, i, 1])
                 
@@ -137,7 +145,9 @@ def gen_frames():
         
         else:
             # ===== FALLBACK: HOG DETECTOR (MENOR PRECISIÓN) =====
-            rects, weights = hog.detectMultiScale(
+            rects: Any
+            weights: Any
+            rects, weights = hog.detectMultiScale(  # type: ignore
                 frame, 
                 winStride=(4, 4),
                 padding=(16, 16), 
@@ -150,7 +160,7 @@ def gen_frames():
                     boxes.append([x, y, w, h])
         
         # Actualizar contador con suavizado temporal
-        person_count = len(boxes)
+        person_count: int = len(boxes)
         count_buffer.append(person_count)
         
         if len(count_buffer) > 5:
@@ -179,23 +189,25 @@ def gen_frames():
         
         # Dibujar rectángulos verdes alrededor de las personas
         for (x, y, w, h) in boxes:
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)  # type: ignore
         
         # Mostrar contador en el frame
-        cv2.putText(
+        cv2.putText(  # type: ignore
             frame, 
             f'Personas: {people_count}', 
             (10, 40),
-            cv2.FONT_HERSHEY_SIMPLEX, 
+            cv2.FONT_HERSHEY_SIMPLEX,  # type: ignore
             1.2, 
             (0, 255, 0), 
             3,
-            cv2.LINE_AA
+            cv2.LINE_AA  # type: ignore
         )
         
         # Codificar frame a JPEG
-        ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 90])
-        frame_out = buffer.tobytes()
+        _: bool
+        buffer: Any
+        _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 90])  # type: ignore
+        frame_out: bytes = buffer.tobytes()  # type: ignore
         
         # Enviar frame al navegador
         yield (b'--frame\r\n'
@@ -206,14 +218,14 @@ def gen_frames():
         camera_instance.release()
         camera_instance = None
 
-def video_feed(request):
+def video_feed(request: HttpRequest) -> StreamingHttpResponse:
     """Vista que devuelve el streaming de video"""
     return StreamingHttpResponse(
         gen_frames(),
         content_type='multipart/x-mixed-replace; boundary=frame'
     )
 
-def stop_camera(request):
+def stop_camera(request: HttpRequest) -> JsonResponse:
     """API para detener la cámara"""
     global camera_active, camera_instance, people_count, current_event_id
     
@@ -227,10 +239,10 @@ def stop_camera(request):
     
     return JsonResponse({'status': 'stopped'})
 
-def get_recent_events(request):
+def get_recent_events(request: HttpRequest) -> JsonResponse:
     """API para obtener los últimos 10 eventos de detección"""
     events = PersonCountEvent.objects.all()[:10]
-    data = {
+    data: Dict[str, Any] = {
         'events': [
             {
                 'id': event.event_id,
@@ -244,6 +256,3 @@ def get_recent_events(request):
         'current_event_id': current_event_id or 'N/A'
     }
     return JsonResponse(data)
-
-def video_feed(request):
-    return StreamingHttpResponse(gen_frames(), content_type='multipart/x-mixed-replace; boundary=frame')
