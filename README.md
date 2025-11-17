@@ -111,10 +111,29 @@ Abre tu navegador y ve a: **http://127.0.0.1:8000/**
 
 Tu navegador pedirá permiso para acceder a la cámara. Haz clic en **"Permitir"**.
 
-### 3.4 Usar el sistema
+### 3.4 Crear cuenta e iniciar sesión
 
-- **Botón "▶️ Iniciar Cámara"**: Activa la detección en tiempo real
-- **Botón "⏹️ Detener Cámara"**: Detiene la cámara y libera recursos
+**Primera vez:**
+1. El navegador te redirigirá automáticamente a: **http://127.0.0.1:8000/login/**
+2. Haz clic en **"Regístrate aquí"**
+3. Completa el formulario:
+   - Usuario (requerido)
+   - Email (opcional)
+   - Contraseña (mínimo 8 caracteres)
+   - Confirmar contraseña
+4. Haz clic en **"Crear Cuenta"**
+5. Serás redirigido al login automáticamente
+
+**Iniciar sesión:**
+1. Ingresa tu usuario y contraseña
+2. Haz clic en **"Iniciar Sesión"**
+3. Accederás al sistema de detección
+
+### 3.5 Usar el sistema
+
+- **Botón "Iniciar Cámara"**: Activa la detección en tiempo real
+- **Botón "Detener Cámara"**: Detiene la cámara y libera recursos
+- **Cerrar Sesión**: Click en tu nombre de usuario en la parte superior
 
 **Para detener el servidor:** Presiona `Ctrl+C` en la terminal
 
@@ -122,7 +141,9 @@ Tu navegador pedirá permiso para acceder a la cámara. Haz clic en **"Permitir"
 
 ## 🌐 URLs Disponibles
 
-- **Aplicación principal:** http://127.0.0.1:8000/
+- **Login:** http://127.0.0.1:8000/login/
+- **Registro:** http://127.0.0.1:8000/register/
+- **Aplicación principal:** http://127.0.0.1:8000/ (requiere login)
 - **API JSON (eventos):** http://127.0.0.1:8000/api/events/
 - **Admin Django** (opcional): http://127.0.0.1:8000/admin/
 
@@ -140,223 +161,15 @@ Tu navegador pedirá permiso para acceder a la cámara. Haz clic en **"Permitir"
 
 ### Características del sistema
 
+- ✅ **Sistema de autenticación**: Login y registro de usuarios
 - ✅ **85-95% precisión** con MobileNet-SSD
 - ✅ **30+ FPS** en tiempo real
 - ✅ **Tabla actualizada automáticamente** cada 2 segundos
 - ✅ **IDs únicos** para cada evento (formato: EVT-XXXXXXXX)
 - ✅ **Control manual** de cámara (iniciar/detener)
+- ✅ **Interfaz moderna** con imagen de fondo personalizada
 
----
 
-## 📊 Ejemplo de Template HTML Mejorado
-
-Si deseas personalizar el frontend, aquí está el código del template actualizado:
-
-### Ubicación: `detector/templates/detector/index.html`
-
-```html
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contador de Personas - Laboratorio</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            padding: 40px;
-            max-width: 900px;
-            width: 100%;
-        }
-        
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-        }
-        
-        .video-container {
-            text-align: center;
-            margin: 30px 0;
-            background: #000;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-        
-        .video-container img {
-            width: 100%;
-            max-width: 640px;
-            height: auto;
-            display: block;
-        }
-        
-        .counter-display {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-            margin-top: 30px;
-            font-size: 1.8em;
-            font-weight: bold;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-        
-        .info {
-            text-align: center;
-            color: #666;
-            margin-top: 20px;
-            font-size: 0.95em;
-            line-height: 1.6;
-        }
-        
-        .badge {
-            display: inline-block;
-            background: #4CAF50;
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            margin: 5px;
-            font-size: 0.9em;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🎥 Contador de Personas en el Laboratorio</h1>
-        
-        <div class="video-container">
-            <img src="{% url 'video_feed' %}" alt="Video en tiempo real">
-        </div>
-        
-        <div class="counter-display">
-            👥 Personas detectadas: <span id="count">0</span>
-        </div>
-        
-        <div class="info">
-            <p><strong>Sistema de detección en tiempo real</strong></p>
-            <div>
-                <span class="badge">OpenCV</span>
-                <span class="badge">Django</span>
-                <span class="badge">Python</span>
-            </div>
-            <p style="margin-top: 10px;">Método: HOG (Histogram of Oriented Gradients)</p>
-        </div>
-    </div>
-</body>
-</html>
-```
-
-Guarda el archivo (`Ctrl + S`).
-
----
-
-## 🔧 Estructura del Código
-
-### Views (detector/views.py)
-
-El código principal incluye:
-
-```python
-import cv2
-import numpy as np
-from django.http import StreamingHttpResponse
-from django.shortcuts import render
-
-# Variable global para contador
-people_count = 0
-
-def index(request):
-    """Vista principal que muestra el template"""
-    return render(request, 'detector/index.html')
-
-def gen_frames():
-    """Generador que procesa frames de video"""
-    global people_count
-    
-    # Inicializar captura de video (0 = cámara predeterminada)
-    camera = cv2.VideoCapture(0)
-    
-    # Inicializar detector HOG para personas
-    hog = cv2.HOGDescriptor()
-    hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
-    
-    while True:
-        # Leer frame de la cámara
-        success, frame = camera.read()
-        
-        if not success:
-            break
-        
-        # Redimensionar para mejorar rendimiento
-        frame = cv2.resize(frame, (640, 480))
-        
-        # Detectar personas en el frame
-        boxes, weights = hog.detectMultiScale(
-            frame, 
-            winStride=(8, 8),
-            padding=(4, 4), 
-            scale=1.05
-        )
-        
-        # Actualizar contador
-        people_count = len(boxes)
-        
-        # Dibujar rectángulos alrededor de las personas detectadas
-        for (x, y, w, h) in boxes:
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        
-        # Mostrar contador en el frame
-        cv2.putText(
-            frame, 
-            f'Personas: {people_count}', 
-            (10, 40),
-            cv2.FONT_HERSHEY_SIMPLEX, 
-            1.2, 
-            (0, 0, 255), 
-            3
-        )
-        
-        # Codificar frame a formato JPEG
-        ret, buffer = cv2.imencode('.jpg', frame)
-        frame = buffer.tobytes()
-        
-        # Retornar frame en formato streaming
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-    
-    # Liberar cámara al terminar
-    camera.release()
-
-def video_feed(request):
-    """Vista que sirve el streaming de video"""
-    return StreamingHttpResponse(
-        gen_frames(),
-        content_type='multipart/x-mixed-replace; boundary=frame'
-    )
-```
-
-Guarda el archivo (`Ctrl + S`).
 
 ---
 
@@ -460,29 +273,47 @@ if class_id == CLASS_PERSON and confidence > 0.6:  # Aumenta de 0.5 a 0.6
 ```
 contador_personas_lab/
 │
-├── venv/                          # Entorno virtual
+├── venv/                          # Entorno virtual de Python
 ├── manage.py                      # Script de gestión de Django
+├── db.sqlite3                     # Base de datos SQLite
+├── requirements.txt               # Dependencias del proyecto
 │
-├── people_counter/                # Configuración del proyecto
+├── people_counter/                # Configuración del proyecto Django
 │   ├── __init__.py
-│   ├── settings.py               # Configuración principal
-│   ├── urls.py                   # URLs principales
-│   ├── asgi.py
-│   └── wsgi.py
+│   ├── settings.py               # Configuración principal (DB, apps, auth)
+│   ├── urls.py                   # URLs principales del proyecto
+│   ├── asgi.py                   # Configuración ASGI
+│   └── wsgi.py                   # Configuración WSGI
 │
 └── detector/                      # Aplicación de detección
-    ├── migrations/
-    ├── templates/
+    ├── migrations/               # Migraciones de base de datos
+    ├── models/                   # Modelos pre-entrenados
+    │   ├── MobileNetSSD_deploy.prototxt      # Configuración del modelo
+    │   └── MobileNetSSD_deploy.caffemodel    # Pesos del modelo (23MB)
+    ├── media/                    # Archivos estáticos
+    │   ├── logo conteo.png       # Logo del sistema
+    │   └── imagen fondo.png      # Imagen de fondo
+    ├── templates/                # Templates HTML
     │   └── detector/
-    │       └── index.html        # Template HTML
+    │       ├── login.html        # Página de inicio de sesión
+    │       ├── register.html     # Página de registro
+    │       └── index.html        # Página principal con detección
     ├── __init__.py
-    ├── admin.py
-    ├── apps.py
-    ├── models.py
-    ├── tests.py
-    ├── urls.py                   # URLs de la app
-    └── views.py                  # Lógica de detección
+    ├── admin.py                  # Configuración del admin de Django
+    ├── apps.py                   # Configuración de la app
+    ├── models.py                 # Modelos de datos (PersonCountEvent, PersonTracking)
+    ├── tests.py                  # Tests unitarios
+    ├── urls.py                   # URLs de la app (login, register, video_feed, API)
+    └── views.py                  # Lógica de autenticación y detección
 ```
+
+### Archivos Clave:
+
+- **views.py**: Contiene vistas de autenticación (login, register, logout) y detección (index, video_feed, API)
+- **models.py**: Define PersonCountEvent (eventos de conteo) y PersonTracking (tracking individual)
+- **urls.py**: Rutas para /login/, /register/, /logout/, /, /video_feed/, /api/events/, /api/stop_camera/
+- **settings.py**: Configuración de LOGIN_URL, LOGIN_REDIRECT_URL, STATICFILES_DIRS
+- **templates/**: 3 templates HTML con diseño moderno y fondo personalizado
 
 ---
 
