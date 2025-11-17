@@ -13,35 +13,45 @@ Sistema de detección y conteo de personas en tiempo real utilizando **OpenCV DN
 
 ---
 
-## 📋 PASO 1: Preparar el Entorno de Trabajo
+## 📋 PASO 1: Clonar el Proyecto
 
-### 1.1 Abrir la terminal o CMD
-
-- **Windows**: Presiona `Win + R`, escribe `cmd` y presiona Enter
-- **Mac/Linux**: Abre la Terminal desde Aplicaciones
-
-### 1.2 Crear la carpeta del proyecto
+### 1.1 Clonar desde GitHub
 
 ```bash
-mkdir contador_personas_lab
-cd contador_personas_lab
+git clone https://github.com/damsoles/Construcciontaller.git
+cd Construcciontaller/contador_personas_lab
 ```
 
-Este comando crea una carpeta llamada "contador_personas_lab" y entra en ella.
+**O descarga manual:**
+1. Ve a: https://github.com/damsoles/Construcciontaller
+2. Click en **"Code"** → **"Download ZIP"**
+3. Descomprime el ZIP
+4. Abre PowerShell/CMD en la carpeta `contador_personas_lab`
 
-### 1.3 Crear el entorno virtual
+### 1.2 Crear el entorno virtual
 
 ```bash
 python -m venv venv
 ```
 
-Esto crea un entorno virtual aislado para instalar las dependencias sin afectar tu sistema.
+⏱️ Tarda 30-60 segundos.
 
-### 1.4 Activar el entorno virtual
+### 1.3 Activar el entorno virtual
 
-**En Windows**:
+**En Windows PowerShell**:
 ```bash
-venv\Scripts\activate
+venv\Scripts\Activate.ps1
+```
+
+**Si da error de permisos**:
+```bash
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+venv\Scripts\Activate.ps1
+```
+
+**En Windows CMD**:
+```bash
+venv\Scripts\activate.bat
 ```
 
 **En Mac/Linux**:
@@ -49,104 +59,100 @@ venv\Scripts\activate
 source venv/bin/activate
 ```
 
-Verás `(venv)` al inicio de tu línea de comandos, indicando que está activo.
+✅ Debes ver `(venv)` al inicio de tu línea de comandos.
 
-### 1.5 Instalar las dependencias
+### 1.4 Instalar las dependencias
 
 ```bash
 pip install -r requirements.txt
 ```
 
-O instala manualmente:
-```bash
-pip install django opencv-contrib-python numpy imutils
-```
+⏱️ Tarda 2-5 minutos. Instala Django, OpenCV, numpy, imutils.
 
-Espera a que cada paquete se instale completamente.
+**💡 Nota:** El modelo MobileNet-SSD ya está incluido en `detector/models/`
 
 ---
 
-## 🚀 PASO 2: Crear el Proyecto Django
+## 🗄️ PASO 2: Configurar Base de Datos
 
-### 2.1 Crear el proyecto principal
-
-```bash
-django-admin startproject people_counter .
-```
-
-⚠️ **Importante**: El punto (`.`) al final es crucial: crea el proyecto en la carpeta actual.
-
-### 2.2 Verificar la estructura creada
-
-Escribe:
-```bash
-dir          # En Windows
-ls           # En Mac/Linux
-```
-
-Deberías ver: `manage.py` y una carpeta `people_counter`.
-
-### 2.3 Crear la aplicación detector
+### 2.1 Aplicar migraciones
 
 ```bash
-python manage.py startapp detector
+python manage.py migrate
 ```
 
-Esto crea una carpeta `detector` con los archivos de la aplicación.
+✅ Crea el archivo `db.sqlite3` con las tablas necesarias.
+
+⏱️ Tarda 5-10 segundos.
 
 ---
 
-## ⚙️ PASO 3: Configurar el Proyecto
+## ▶️ PASO 3: Ejecutar el Sistema
 
-### 3.1 Abrir el proyecto en un editor de texto
+### 3.1 Iniciar el servidor
 
-Abre la carpeta completa en Visual Studio Code, PyCharm, Sublime Text o cualquier editor.
-
-### 3.2 Registrar la aplicación
-
-Abre el archivo `people_counter/settings.py` y busca la sección `INSTALLED_APPS` (alrededor de la línea 33):
-
-```python
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'detector',  # ← AÑADE ESTA LÍNEA
-]
+```bash
+python manage.py runserver
 ```
 
-⚠️ **Importante**: Incluye la coma al final.
+✅ Deberías ver:
+```
+Starting development server at http://127.0.0.1:8000/
+✅ Usando MobileNet-SSD con OpenCV DNN - Precisión mejorada
+```
 
-### 3.3 Guardar el archivo
+⚠️ **No cierres esta terminal**
 
-Presiona `Ctrl + S` (Windows/Linux) o `Cmd + S` (Mac).
+### 3.2 Abrir en el navegador
+
+Abre tu navegador y ve a: **http://127.0.0.1:8000/**
+
+### 3.3 Permitir acceso a la cámara
+
+Tu navegador pedirá permiso para acceder a la cámara. Haz clic en **"Permitir"**.
+
+### 3.4 Usar el sistema
+
+- **Botón "▶️ Iniciar Cámara"**: Activa la detección en tiempo real
+- **Botón "⏹️ Detener Cámara"**: Detiene la cámara y libera recursos
+
+**Para detener el servidor:** Presiona `Ctrl+C` en la terminal
 
 ---
 
-## 📁 PASO 4: Crear las Carpetas de Templates
+## 🌐 URLs Disponibles
 
-### 4.1 Crear carpetas necesarias
-
-Dentro de la carpeta `detector`, crea una nueva carpeta llamada `templates`.
-
-Dentro de `templates`, crea otra carpeta llamada `detector`.
-
-La estructura quedará: `detector/templates/detector/`
-
-**¿Por qué?** Django busca templates en esta estructura específica.
+- **Aplicación principal:** http://127.0.0.1:8000/
+- **API JSON (eventos):** http://127.0.0.1:8000/api/events/
+- **Admin Django** (opcional): http://127.0.0.1:8000/admin/
 
 ---
 
-## 🌐 PASO 5: Crear el Template HTML
+## 🧪 Probar el Sistema
 
-### 5.1 Crear el archivo index.html
+### Verificar detección
 
-Dentro de `detector/templates/detector/`, crea un archivo llamado `index.html`.
+1. Presiona **"Iniciar Cámara"**
+2. Colócate frente a la cámara
+3. Verás un rectángulo verde alrededor de tu silueta
+4. El contador mostrará "Personas detectadas: 1"
+5. La tabla muestra eventos con ID único, cantidad y fecha/hora
 
-### 5.2 Copiar el código en index.html
+### Características del sistema
+
+- ✅ **85-95% precisión** con MobileNet-SSD
+- ✅ **30+ FPS** en tiempo real
+- ✅ **Tabla actualizada automáticamente** cada 2 segundos
+- ✅ **IDs únicos** para cada evento (formato: EVT-XXXXXXXX)
+- ✅ **Control manual** de cámara (iniciar/detener)
+
+---
+
+## 📊 Ejemplo de Template HTML Mejorado
+
+Si deseas personalizar el frontend, aquí está el código del template actualizado:
+
+### Ubicación: `detector/templates/detector/index.html`
 
 ```html
 <!DOCTYPE html>
@@ -265,13 +271,11 @@ Guarda el archivo (`Ctrl + S`).
 
 ---
 
-## 👁️ PASO 6: Crear las Vistas (Views)
+## 🔧 Estructura del Código
 
-### 6.1 Abrir el archivo detector/views.py
+### Views (detector/views.py)
 
-Encontrarás un archivo casi vacío.
-
-### 6.2 Reemplazar TODO el contenido con este código
+El código principal incluye:
 
 ```python
 import cv2
@@ -356,148 +360,53 @@ Guarda el archivo (`Ctrl + S`).
 
 ---
 
-## 🔗 PASO 7: Configurar las URLs
+## 🔗 URLs del Sistema
 
-### 7.1 Crear el archivo detector/urls.py
+Ya configuradas en el proyecto:
 
-Dentro de la carpeta `detector`, crea un nuevo archivo llamado `urls.py`.
-
-### 7.2 Copiar este código en detector/urls.py
-
+**detector/urls.py:**
 ```python
-from django.urls import path
-from . import views
-
 urlpatterns = [
     path('', views.index, name='index'),
     path('video_feed/', views.video_feed, name='video_feed'),
+    path('api/events/', views.get_recent_events, name='get_recent_events'),
+    path('api/stop_camera/', views.stop_camera, name='stop_camera'),
 ]
 ```
 
-Guarda el archivo.
-
-### 7.3 Modificar el archivo people_counter/urls.py
-
-Abre `people_counter/urls.py` y reemplaza todo su contenido con:
-
+**people_counter/urls.py:**
 ```python
-from django.contrib import admin
-from django.urls import path, include
-
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('detector.urls')),
 ]
 ```
 
-Guarda el archivo.
-
 ---
 
-## 🧠 PASO 8: Descargar el Modelo MobileNet-SSD
+## 💡 Características Principales
 
-**¡IMPORTANTE!** Para obtener alta precisión (85-95%) en la detección de personas, necesitas descargar el modelo pre-entrenado MobileNet-SSD.
+### ✅ Sistema de Tracking con IDs Únicos
+- Cada evento tiene un ID único (formato: EVT-XXXXXXXX)
+- Se guarda en SQLite con timestamp exacto
+- Historial completo de detecciones
 
-### 8.1 Ejecutar el script de descarga
+### ✅ Frontend Profesional
+- Diseño moderno con degradado azul (#5A87E9)
+- Dos columnas: video en vivo + tabla de eventos
+- Actualización automática cada 2 segundos
+- Control manual de cámara (botones iniciar/detener)
 
-**En Windows (PowerShell)**:
-```bash
-.\descargar_modelo.ps1
-```
+### ✅ API REST
+- Endpoint `/api/events/` retorna JSON
+- Últimos 10 eventos con detalles completos
+- Contador actual y evento activo
 
-**En Mac/Linux**:
-```bash
-# Crear directorio
-mkdir -p detector/models
-
-# Descargar archivos
-curl -o detector/models/MobileNetSSD_deploy.prototxt https://github.com/PINTO0309/MobileNet-SSD-RealSense/raw/master/caffemodel/MobileNetSSD/MobileNetSSD_deploy.prototxt
-
-curl -L -o detector/models/MobileNetSSD_deploy.caffemodel https://github.com/PINTO0309/MobileNet-SSD-RealSense/raw/master/caffemodel/MobileNetSSD/MobileNetSSD_deploy.caffemodel
-```
-
-### 8.2 Verificar la descarga
-
-El script creará la carpeta `detector/models/` y descargará:
-- ✅ `MobileNetSSD_deploy.prototxt` (~30 KB) - Configuración del modelo
-- ✅ `MobileNetSSD_deploy.caffemodel` (~23 MB) - Pesos del modelo
-
-Si ves el mensaje **"MODELO DESCARGADO EXITOSAMENTE"**, ¡estás listo!
-
-### 8.3 ¿Qué pasa si no descargo el modelo?
-
-El sistema funcionará de todos modos usando el detector HOG como respaldo, pero con menor precisión (60-70% vs 85-95%).
-
----
-
-## ▶️ PASO 9: Ejecutar el Proyecto
-
-### 9.1 Verificar que el entorno virtual está activo
-
-Debes ver `(venv)` al inicio de tu línea de comandos.
-
-### 9.2 Aplicar migraciones (preparar base de datos)
-
-```bash
-python manage.py migrate
-```
-
-Verás mensajes indicando que se aplicaron las migraciones exitosamente.
-
-### 9.3 Ejecutar el servidor
-
-```bash
-python manage.py runserver
-```
-
-Verás un mensaje como:
-```
-Starting development server at http://127.0.0.1:8000/
-✅ Usando MobileNet-SSD con OpenCV DNN - Precisión mejorada
-```
-
-⚠️ **¡NO cierres esta ventana!**
-
-### 9.4 Abrir en el navegador
-
-Abre tu navegador (Chrome, Firefox, Edge) y ve a:
-```
-http://localhost:8000
-```
-o
-```
-http://127.0.0.1:8000
-```
-
-Deberías ver tu aplicación funcionando.
-
-### 9.5 Permitir acceso a la cámara
-
-Tu navegador te pedirá permiso para acceder a la cámara. Haz clic en **"Permitir"**.
-
----
-
-## 🧪 PASO 10: Probar el Sistema
-
-### 10.1 Verificar la detección
-
-1. Colócate frente a la cámara
-2. Deberías ver un rectángulo verde alrededor de tu silueta
-3. El contador mostrará "Personas: 1"
-4. La precisión con MobileNet-SSD es de **85-95%**
-
-### 10.2 Probar con múltiples personas
-
-1. Si hay más personas disponibles, pídeles que se coloquen frente a la cámara
-2. El sistema debería detectar y contar a cada persona con alta precisión
-3. El contador se mantiene estable gracias al suavizado temporal
-
-### 10.3 Observar el rendimiento
-
-- ✅ **30+ FPS** en CPU con MobileNet-SSD
-- ✅ Pocos falsos positivos gracias a filtros de confianza
-- ✅ Detección estable con suavizado temporal
-- ✅ Funciona mejor con buena iluminación
+### ✅ Alta Precisión
+- **MobileNet-SSD**: 85-95% de precisión
+- **30+ FPS** en tiempo real
+- Filtros de confianza y proporción
+- Suavizado temporal para estabilidad
 
 ---
 
@@ -523,26 +432,25 @@ Tu navegador te pedirá permiso para acceder a la cámara. Haz clic en **"Permit
 pip install opencv-contrib-python
 ```
 
-### ❌ El modelo no se descargó
+### ❌ Error: "Port 8000 is already in use"
 
-**Solución**: 
-- Ejecuta nuevamente `.\descargar_modelo.ps1`
-- O descarga manualmente desde GitHub y coloca los archivos en `detector/models/`
-- El sistema funcionará con HOG como respaldo
+**Solución**: Ya hay un servidor corriendo. Cierra la ventana anterior o usa otro puerto:
+```bash
+python manage.py runserver 8080
+```
 
 ### ❌ La detección es muy lenta
 
-**Solución**: El modelo MobileNet-SSD está optimizado para CPU. Si aún es lento:
-- Reduce la resolución de la cámara en `views.py`
-- Verifica que no hay otros programas pesados ejecutándose
+**Solución**: MobileNet-SSD está optimizado para CPU pero si es lento:
+- Verifica que no hay procesos pesados corriendo
+- Cierra pestañas del navegador que no uses
+- El modelo ya está incluido en `detector/models/`
 
-### ❌ Falsos positivos con MobileNet-SSD
+### ❌ Muchos falsos positivos
 
-**Solución**: Ajusta el umbral de confianza en `views.py`:
+**Solución**: Ajusta el umbral de confianza en `detector/views.py` línea ~60:
 ```python
 if class_id == CLASS_PERSON and confidence > 0.6:  # Aumenta de 0.5 a 0.6
-```
-people_count = len(boxes)
 ```
 
 ---
@@ -660,27 +568,16 @@ Este proyecto es de código abierto y está disponible para fines educativos.
 
 ## ✅ Lista de Verificación Final
 
-- [ ] Entorno virtual creado y activado
+- [ ] Proyecto clonado desde GitHub
+- [ ] Entorno virtual creado y activado `(venv)`
 - [ ] Dependencias instaladas (`pip install -r requirements.txt`)
-- [ ] Proyecto Django creado
-- [ ] Aplicación `detector` configurada
-- [ ] Templates HTML creados
-- [ ] Código en `views.py` y `urls.py` implementado
-- [ ] **Modelo MobileNet-SSD descargado** (`.\descargar_modelo.ps1`)
+- [ ] Modelo MobileNet-SSD verificado en `detector/models/`
 - [ ] Migraciones aplicadas (`python manage.py migrate`)
 - [ ] Servidor ejecutándose (`python manage.py runserver`)
-- [ ] Aplicación funcionando en http://localhost:8000/
-- [ ] Detección de personas verificada con MobileNet-SSD
-- [ ] Dependencias instaladas (Django, OpenCV, NumPy, imutils)
-- [ ] Proyecto Django creado
-- [ ] Aplicación 'detector' registrada en `settings.py`
-- [ ] Templates creados en la estructura correcta
-- [ ] Views implementadas con lógica de detección
-- [ ] URLs configuradas correctamente
-- [ ] Migraciones aplicadas
-- [ ] Servidor ejecutándose sin errores
-- [ ] Cámara funcionando y detectando personas
+- [ ] Aplicación funcionando en http://127.0.0.1:8000/
+- [ ] Cámara iniciada con botón "▶️ Iniciar"
+- [ ] Detección de personas verificada (85-95% precisión)
+- [ ] Eventos registrados en tabla lateral
+- [ ] API funcionando en `/api/events/`
 
 ---
-
-¡Felicidades! 🎉 Has completado exitosamente el proyecto de **Contador de Personas en el Laboratorio** con OpenCV y Django.
