@@ -102,8 +102,10 @@ def register_view(request: HttpRequest) -> HttpResponse:
                 email=email,
                 password=password1
             )
-            login(request, user)
-            return redirect('login')
+            # Redirigir a login con mensaje de éxito
+            return render(request, 'detector/login.html', {
+                'success': 'Cuenta creada exitosamente. Por favor inicia sesión.'
+            })
         except Exception as e:
             return render(request, 'detector/register.html', {
                 'error': f'Error al crear la cuenta: {str(e)}',
