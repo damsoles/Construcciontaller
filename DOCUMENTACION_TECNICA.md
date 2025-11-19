@@ -96,12 +96,22 @@ contador_personas_lab/
 │   ├── urls.py                    # Rutas principales
 │   └── wsgi.py                    # Punto de entrada WSGI
 │
+├── pruebas/                       # Suite de pruebas
+│   ├── README.md                  # Instrucciones de ejecución
+│   ├── test_opencv_detection.py   # Pruebas unitarias OpenCV/MobileNet
+│   └── test_django_integration.py # Pruebas de integración Django
+│
+├── .vscode/                       # Configuración de VS Code
+│   └── settings.json              # Configuración de Python
+│
+├── .gitignore                     # Archivos excluidos de git
 ├── venv/                          # Entorno virtual (no en git)
 ├── db.sqlite3                     # Base de datos SQLite
 ├── manage.py                      # CLI de Django
 ├── requirements.txt               # Dependencias del proyecto
 ├── README.md                      # Documentación principal
-└── GUIA_INSTALACION.md           # Guía de instalación
+├── GUIA_INSTALACION.md           # Guía de instalación
+└── DOCUMENTACION_TECNICA.md      # Documentación técnica (este archivo)
 ```
 
 ---
@@ -486,20 +496,118 @@ ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
 
 ## 10. Pruebas Unitarias
 
-### 10.1 Ejecutar pruebas
+### 10.1 Suite de Pruebas
+
+El proyecto incluye dos archivos de pruebas en el directorio `pruebas/`:
+
+1. **`test_opencv_detection.py`**: 11 pruebas unitarias del módulo OpenCV
+   - Verificación de modelos MobileNet-SSD
+   - Pruebas de detección con imágenes sintéticas
+   - Validación de filtros (confianza, aspect ratio, área)
+   - Suavizado temporal y cálculo de moda
+
+2. **`test_django_integration.py`**: Pruebas de integración Django
+   - Sistema de autenticación (login/register)
+   - Rutas protegidas
+   - API REST endpoints
+   - Flujos completos de usuario
+
+### 10.2 Ejecutar pruebas con Django
+
+**⚠️ IMPORTANTE**: Las pruebas se deben ejecutar con el entorno virtual activado.
 
 ```bash
-# Todas las pruebas
+# Activar entorno virtual (Windows)
+venv\Scripts\activate
+
+# Activar entorno virtual (Linux/Mac)
+source venv/bin/activate
+
+# Todas las pruebas de Django
 python manage.py test detector
 
 # Prueba específica
-python manage.py test detector.OpenCVDetectionTests.test_carga_modelo_opencv
+python manage.py test detector.tests.TestPersonCountEvent
 
-# Con verbosidad
+# Con verbosidad detallada
 python manage.py test detector --verbosity=2
 ```
 
-### 10.2 Cobertura de código
+### 10.3 Ejecutar pruebas independientes
+
+**Desde el directorio raíz del proyecto:**
+
+```bash
+# Activar entorno virtual primero
+venv\Scripts\activate
+
+# Pruebas de OpenCV (11 pruebas unitarias)
+python pruebas\test_opencv_detection.py
+
+# Pruebas de integración Django
+python pruebas\test_django_integration.py
+```
+
+**Desde el directorio `pruebas/`:**
+
+```bash
+cd pruebas
+
+# Con entorno virtual activado
+..\venv\Scripts\python.exe test_opencv_detection.py
+..\venv\Scripts\python.exe test_django_integration.py
+```
+
+**Salida esperada (test_opencv_detection.py):**
+```
+======================================================================
+  PRUEBAS UNITARIAS - MÓDULO DE DETECCIÓN CON OPENCV
+======================================================================
+
+test_01_existencia_archivo_prototxt ... ok
+test_02_existencia_archivo_caffemodel ... ok
+test_03_carga_modelo_opencv ... ok
+test_04_deteccion_en_imagen_blanca ... ok
+test_05_deteccion_en_imagen_negra ... ok
+test_06_formato_detecciones ... ok
+test_07_filtro_confianza ... ok
+test_08_validacion_aspect_ratio ... ok
+test_09_area_minima ... ok
+test_10_buffer_temporal ... ok
+test_11_calculo_moda ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.524s
+
+OK
+```
+
+### 10.4 Solución de problemas con las pruebas
+
+**Error: "ModuleNotFoundError: No module named 'cv2'" o "No module named 'django'"**
+
+**Causa**: El entorno virtual no está activado.
+
+**Solución**:
+```bash
+# Windows
+venv\Scripts\activate
+
+# Linux/Mac
+source venv/bin/activate
+
+# Verificar que el entorno está activo
+python --version  # Debe mostrar Python 3.8+
+pip list          # Debe mostrar opencv-python, django, etc.
+```
+
+**Ejecutar sin activar (alternativa):**
+```bash
+# Windows - usar ruta completa al intérprete del venv
+venv\Scripts\python.exe pruebas\test_opencv_detection.py
+```
+
+### 10.5 Cobertura de código
 
 ```bash
 # Instalar coverage
@@ -515,12 +623,12 @@ coverage report
 coverage html
 
 # Abrir reporte
-start htmlcov/index.html  # Windows
+start htmlcov\index.html  # Windows
 open htmlcov/index.html   # Mac
 xdg-open htmlcov/index.html  # Linux
 ```
 
-### 10.3 Pruebas de integración
+### 10.6 Pruebas de integración personalizadas
 
 ```python
 from django.test import Client
